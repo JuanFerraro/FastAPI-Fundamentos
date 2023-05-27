@@ -65,3 +65,19 @@ def add_movie(movie: Movie):
     else:
         raise HTTPException(status_code=500, detail="Error al agregar la película")
 
+
+""" Actualizar una película """
+@app.put('/movies/{id}', tags=['movies'])
+def update_movie(id: int, movie_data: Movie):
+    movies_collection = app.mongodb_client["movies"]
+    movie_dict = movie_data.dict()  
+    result = movies_collection.update_one({"id": id}, {"$set": movie_dict})
+    
+    if result.matched_count == 1:
+        return {"message": "Película actualizada correctamente"}
+    elif result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Película no encontrada")
+    else:
+        raise HTTPException(status_code=500, detail="Error al actualizar la película")
+
+
