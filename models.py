@@ -5,4 +5,5 @@ class Movie(BaseModel):
     titulo: str
     director: str
     productora: str
-    añoLanzamiento: str
+    categoria: str
+    anoLanzamiento: str
