@@ -80,4 +80,17 @@ def update_movie(id: int, movie_data: Movie):
     else:
         raise HTTPException(status_code=500, detail="Error al actualizar la película")
 
+""" Eliminar una película """
+@app.delete('/movies/{id}', tags=['movies'])
+def delete_movie(id: int):
+    movies_collection = app.mongodb_client["movies"]
+    result = movies_collection.delete_one({"id": id})
+
+    if result.deleted_count == 1:
+        return {"message": "Película eliminada correctamente"}
+    elif result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Película no encontrada")
+    else:
+        raise HTTPException(status_code=500, detail="Error al eliminar la película")
+
 
