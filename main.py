@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Path, Query
 from fastapi.responses import HTMLResponse
 from database import connect_to_mongodb
 from models import Movie
@@ -30,7 +30,7 @@ def get_movies():
 
 """ Buscar movie por id """
 @app.get('/movies/{id}', tags=['movies'])
-def get_movie_by_id(id: int):
+def get_movie_by_id(id: int = Path(ge = 1, le = 99999)):
     movies_collection = app.mongodb_client["movies"]
     movie = movies_collection.find_one({"id": id})
     if movie:
