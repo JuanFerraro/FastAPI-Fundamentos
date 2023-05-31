@@ -1,7 +1,8 @@
-from fastapi import FastAPI, HTTPException, Path, Query
+from fastapi import FastAPI, HTTPException, Path
 from fastapi.responses import HTMLResponse
 from database import connect_to_mongodb
 from models import Movie
+
 
 app = FastAPI()
 app.title = "Mi aplicacion con FastAPI"
@@ -18,7 +19,7 @@ def message():
     return HTMLResponse('<h1>Hola mundo</h1>')
 
 """ Ver todas las peliculas """
-@app.get('/movies', tags=['movies'])
+@app.get('/movies', tags=['movies'], status_code=200)
 def get_movies():
     movies_collection = app.mongodb_client["movies"] #tomar la coleccion movies de la DB
     movies = movies_collection.find() #Utilizar busuqeda en mongoDB
@@ -26,7 +27,11 @@ def get_movies():
     for movie in movies:
         movie["_id"] = str(movie["_id"])  # Convertir ObjectId a cadena
         movie_list.append(movie)
-    return movie_list
+
+    if len(movie_list) == 0:
+        raise HTTPException(status_code=404, detail="No se encontraron películas")
+    
+    return movie_list(status_code=200, content=movies)
 
 """ Buscar movie por id """
 @app.get('/movies/{id}', tags=['movies'])
@@ -55,7 +60,7 @@ def get_movie_by_category(categoria: str):
     return movie_list
 
 """ Insertar nueva pelicula """
-@app.post('/movies', tags=['movies'])
+@app.post('/movies', tags=['movies'], status_code=201)
 def add_movie(movie: Movie):
     movies_collection = app.mongodb_client["movies"]
     movie_dict = movie.dict()  # Convertir la instancia de Movie a un diccionario
@@ -67,7 +72,7 @@ def add_movie(movie: Movie):
 
 
 """ Actualizar una película """
-@app.put('/movies/{id}', tags=['movies'])
+@app.put('/movies/{id}', tags=['movies'], status_code=200)
 def update_movie(id: int, movie_data: Movie):
     movies_collection = app.mongodb_client["movies"]
     movie_dict = movie_data.dict()  
@@ -81,7 +86,7 @@ def update_movie(id: int, movie_data: Movie):
         raise HTTPException(status_code=500, detail="Error al actualizar la película")
 
 """ Eliminar una película """
-@app.delete('/movies/{id}', tags=['movies'])
+@app.delete('/movies/{id}', tags=['movies'], status_code=200)
 def delete_movie(id: int):
     movies_collection = app.mongodb_client["movies"]
     result = movies_collection.delete_one({"id": id})
@@ -92,5 +97,6 @@ def delete_movie(id: int):
         raise HTTPException(status_code=404, detail="Película no encontrada")
     else:
         raise HTTPException(status_code=500, detail="Error al eliminar la película")
+
 
 
