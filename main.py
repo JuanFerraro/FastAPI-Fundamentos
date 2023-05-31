@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException, Path
 from fastapi.responses import HTMLResponse
 from database import connect_to_mongodb
-from models import Movie
+from models import Movie, User
+from jwt_manager import create_token
 
 
 app = FastAPI()
@@ -17,6 +18,11 @@ async def startup():
 @app.get('/', tags=['Home']) 
 def message():
     return HTMLResponse('<h1>Hola mundo</h1>')
+
+""" Ruta Usuario Token """
+@app.post("/login", tags=['auth'])
+def login(user: User):
+    return user
 
 """ Ver todas las peliculas """
 @app.get('/movies', tags=['movies'], status_code=200)

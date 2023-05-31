@@ -20,3 +20,9 @@ class Movie(BaseModel):
                 "anoLanzamiento": 1997
             }
         }
+
+class User(BaseModel):
+    email: str
+    password: str
+
+    
