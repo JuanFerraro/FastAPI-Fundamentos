@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Path
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from database import connect_to_mongodb
 from models import Movie, User
 from jwt_manager import create_token
@@ -22,7 +22,11 @@ def message():
 """ Ruta Usuario Token """
 @app.post("/login", tags=['auth'])
 def login(user: User):
-    return user
+    if user.email == "admin@gmail.com" and user.password =="admin":
+        token: str = create_token(user.dict())
+        return JSONResponse(status_code = 200, content=token)
+    else:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
 """ Ver todas las peliculas """
 @app.get('/movies', tags=['movies'], status_code=200)
