@@ -1,13 +1,24 @@
-from fastapi import FastAPI, HTTPException, Path
+from fastapi import FastAPI, HTTPException, Path, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from database import connect_to_mongodb
 from models import Movie, User
-from jwt_manager import create_token
-
+from fastapi.security import HTTPBearer
+from jwt_manager import create_token, validate_token
 
 app = FastAPI()
-app.title = "Mi aplicacion con FastAPI"
-app.version = "0.0.1"
+app.title = "Web Services y Cloud con FastAPI y MongoDB"
+app.version = "2.1."
+
+""" Autenticacion """
+class JWTBearer(HTTPBearer):
+    async def __call__(self, request: Request):
+       auth = await super().__call__(request)
+       data = validate_token(auth.credentials)
+       users_collection = app.mongodb_client["users"]
+       user_data = None
+       user_data = users_collection.find_one({"email": data['email']})
+       if user_data is None:
+           raise HTTPException(status_code=403, detail="Credenciales invalidas")
 
 """ Conexion BD """
 @app.on_event("startup")
@@ -17,31 +28,44 @@ async def startup():
 """ End Point """
 @app.get('/', tags=['Home']) 
 def message():
-    return HTMLResponse('<h1>Hola mundo</h1>')
+    return HTMLResponse('<h1>Web Services y MongoDB</h1>')
+
+""" Registrar Usuario """
+@app.post("/register", tags=['auth'])
+def register(user: User):
+    users_collection = app.mongodb_client["users"]
+    existing_user = users_collection.find_one({"email": user.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="El usuario ya está registrado")
+    users_collection.insert_one(user.dict())
+    return JSONResponse(status_code=200, content="Usuario registrado exitosamente")
+
 
 """ Ruta Usuario Token """
 @app.post("/login", tags=['auth'])
 def login(user: User):
-    if user.email == "admin@gmail.com" and user.password =="admin":
+    users_collection = app.mongodb_client["users"]
+    user_data = users_collection.find_one({"email": user.email, "password": user.password})
+    if user_data:
         token: str = create_token(user.dict())
-        return JSONResponse(status_code = 200, content=token)
+        return JSONResponse(status_code=200, content=token)
     else:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
 """ Ver todas las peliculas """
-@app.get('/movies', tags=['movies'], status_code=200)
+@app.get('/movies', tags=['movies'], status_code=200, dependencies=[Depends(JWTBearer())])
 def get_movies():
     movies_collection = app.mongodb_client["movies"] #tomar la coleccion movies de la DB
     movies = movies_collection.find() #Utilizar busuqeda en mongoDB
     movie_list = []
     for movie in movies:
-        movie["_id"] = str(movie["_id"])  # Convertir ObjectId a cadena
+        movie["_id"] = str(movie["_id"])  
         movie_list.append(movie)
 
     if len(movie_list) == 0:
         raise HTTPException(status_code=404, detail="No se encontraron películas")
     
-    return movie_list(status_code=200, content=movies)
+    return movie_list
 
 """ Buscar movie por id """
 @app.get('/movies/{id}', tags=['movies'])

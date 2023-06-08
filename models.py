@@ -1,5 +1,7 @@
+from typing import Optional
+from fastapi.security.http import HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
-
+from starlette.requests import Request
 
 class Movie(BaseModel):
     id: int
@@ -22,7 +24,14 @@ class Movie(BaseModel):
         }
 
 class User(BaseModel):
-    email: str
-    password: str
+    email: str = Field(description="Email address", regex=r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
+    password: str = Field(description="Password", min_length=8)
 
-    
+    class Config:
+        schema_extra = {
+            "example": {
+                "email": "juan@gmail.com",
+                "password": "my_secret_password"
+            }
+        }
+
