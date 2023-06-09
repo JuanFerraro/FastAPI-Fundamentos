@@ -41,7 +41,7 @@ def register(user: User):
     return JSONResponse(status_code=200, content="Usuario registrado exitosamente")
 
 
-""" Ruta Usuario Token """
+""" Login Usuario Token """
 @app.post("/login", tags=['auth'])
 def login(user: User):
     users_collection = app.mongodb_client["users"]
